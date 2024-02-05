@@ -36,7 +36,7 @@ export class VaultCdkStack extends cdk.Stack {
     userDataCommands.addCommands(
       bootstrap,
     );
-
+    const handle = new ec2.InitServiceRestartHandle();
     const machineImage = ec2.MachineImage.latestAmazonLinux2();
 
     const vaultServer = new ec2.Instance(this, 'vaultServer', {
@@ -48,29 +48,26 @@ export class VaultCdkStack extends cdk.Stack {
       /**
        * CloudFormation Init and InitOption (Optional)
        */
-      // init: ec2.CloudFormationInit.fromConfigSets({
-      //   configSets: {
-      //     default: ['vaultInit']
-      //   },
-      //   configs: {
-      //     vaultInit: new ec2.InitConfig([
-      //       ec2.InitPackage.apt('')
-      //       ec2.InitSource.fromS3Object('/root/.ansible', artifactsBucket, ansibleplaybook.s3ObjectKey),
-      //       ec2.InitFile.fromString('/tmp/runplaybook.sh',
-      //       runAnsible,
-      //       {
-      //         mode: '0775'
-      //       }
-      //       ),
-      //       ec2.InitCommand.shellCommand('sudo systemctl enable amazon-cloudwatch-agent'),
-      //       ec2.InitCommand.shellCommand('sudo /tmp/runplaybook.sh 2>&1 | tee /tmp/runplaybook.log'),
-      //       ec2.InitCommand.shellCommand(`sed -i 's/api_key_value/` + datadogKey + `/' /etc/datadog-agent/datadog.yaml`, {
-      //         serviceRestartHandles: [handle]
-      //       }),
-      //       ec2.InitService.enable('datadog-agent', { serviceRestartHandle: handle })
-      //     ])
-      //   }
-      // }),
+      init: ec2.CloudFormationInit.fromConfigSets({
+        configSets: {
+          default: ['vaultInit']
+        },
+        configs: {
+          vaultInit: new ec2.InitConfig([
+            ec2.InitFile.fromString('/etc/consul.d/ui.json',
+              fs.readFileSync('./files/consul_ui.json', 'utf-8')),
+            ec2.InitFile.fromString('/etc/systemd/system/consul.service',
+              fs.readFileSync('./files/consul_systemd', 'utf-8')),
+            ec2.InitFile.fromString('/etc/vault/config.hcl',
+              fs.readFileSync('./files/vault_config.hcl', 'utf-8')),
+            ec2.InitFile.fromString('/etc/systemd/system/vault.service',
+              fs.readFileSync('./files/vault_systemd', 'utf-8')),
+            ec2.InitCommand.shellCommand('sudo systemctl daemon-reload'),
+            ec2.InitService.enable('consul', { serviceRestartHandle: handle }),
+            ec2.InitService.enable('vault', { serviceRestartHandle: handle }),
+          ])
+        }
+      }),
     })
 
     vaultServer.connections.allowFromAnyIpv4(ec2.Port.tcp(22))
