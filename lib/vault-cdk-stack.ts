@@ -72,6 +72,11 @@ export class VaultCdkStack extends cdk.Stack {
 
     vaultServer.connections.allowFromAnyIpv4(ec2.Port.tcp(22))
     vaultServer.connections.allowFromAnyIpv4(ec2.Port.tcp(80))
+    /**
+     * Allow only specific IP (alternative to above Allow From Any)
+     */    
+    // vaultServer.connections.allowFrom(ec2.Peer.ipv4('103.137.12.134/32'), ec2.Port.tcp(22))
+    // vaultServer.connections.allowFrom(ec2.Peer.ipv4('103.137.12.134/32'), ec2.Port.tcp(80))
 
     const vaultRecordSet = new route53.RecordSet(this, 'vaultRecordSet', {
       recordType: route53.RecordType.A,
