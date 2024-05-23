@@ -71,7 +71,7 @@ export class VaultCdkStack extends cdk.Stack {
     })
 
     vaultServer.connections.allowFromAnyIpv4(ec2.Port.tcp(22))
-    vaultServer.connections.allowFromAnyIpv4(ec2.Port.tcp(80))
+    vaultServer.connections.allowFromAnyIpv4(ec2.Port.tcp(8200))
     /**
      * Allow only specific IP or IP range (alternative to above Allow From Any)
      */    
