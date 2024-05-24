@@ -70,12 +70,12 @@ export class VaultCdkStack extends cdk.Stack {
       }),
     })
 
-    vaultServer.connections.allowFromAnyIpv4(ec2.Port.tcp(22))
+    // vaultServer.connections.allowFromAnyIpv4(ec2.Port.tcp(22))
     vaultServer.connections.allowFromAnyIpv4(ec2.Port.tcp(8200))
     /**
      * Allow only specific IP or IP range (alternative to above Allow From Any)
      */    
-    // vaultServer.connections.allowFrom(ec2.Peer.ipv4('103.137.12.0/24'), ec2.Port.tcp(22))
+    vaultServer.connections.allowFrom(ec2.Peer.ipv4('193.116.240.127/32'), ec2.Port.tcp(22))
     // vaultServer.connections.allowFrom(ec2.Peer.ipv4('103.137.12.0/24'), ec2.Port.tcp(80))
 
     const vaultRecordSet = new route53.RecordSet(this, 'vaultRecordSet', {
@@ -90,6 +90,10 @@ export class VaultCdkStack extends cdk.Stack {
     new cdk.CfnOutput(this, 'vaultPublicIp', {
       value: vaultServer.instancePublicIp,
       description: 'Public IP of Instance'
+    });
+    new cdk.CfnOutput(this, 'vaultDNSUrl', {
+      value: vaultRecordSet.domainName,
+      description: 'Domain Name of Instance'
     });
   }
 }
