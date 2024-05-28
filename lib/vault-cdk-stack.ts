@@ -1,6 +1,7 @@
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
+import * as iam from 'aws-cdk-lib/aws-iam';
 import * as route53 from 'aws-cdk-lib/aws-route53';
 import * as config from 'config';
 import * as fs from 'fs';
@@ -39,6 +40,28 @@ export class VaultCdkStack extends cdk.Stack {
     const handle = new ec2.InitServiceRestartHandle();
     const machineImage = ec2.MachineImage.latestAmazonLinux2();
 
+    const vaultPolicy = new iam.PolicyStatement({
+      actions: [
+        "iam:AttachUserPolicy",
+        "iam:CreateAccessKey",
+        "iam:CreateUser",
+        "iam:DeleteAccessKey",
+        "iam:DeleteUser",
+        "iam:DeleteUserPolicy",
+        "iam:DetachUserPolicy",
+        "iam:GetUser",
+        "iam:ListAccessKeys",
+        "iam:ListAttachedUserPolicies",
+        "iam:ListGroupsForUser",
+        "iam:ListUserPolicies",
+        "iam:PutUserPolicy",
+        "iam:AddUserToGroup",
+        "iam:RemoveUserFromGroup"
+      ],
+      effect: iam.Effect.ALLOW,
+      resources: [`arn:aws:iam::${process.env.CDK_DEFAULT_ACCOUNT}:user/*`],
+    })
+
     const vaultServer = new ec2.Instance(this, 'vaultServer', {
       instanceType: new ec2.InstanceType('t3.micro'),
       machineImage: machineImage,
@@ -69,6 +92,7 @@ export class VaultCdkStack extends cdk.Stack {
         }
       }),
     })
+    vaultServer.addToRolePolicy(vaultPolicy)
 
     // vaultServer.connections.allowFromAnyIpv4(ec2.Port.tcp(22))
     vaultServer.connections.allowFromAnyIpv4(ec2.Port.tcp(8200))
