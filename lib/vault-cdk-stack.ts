@@ -1,6 +1,8 @@
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
+import * as iam from 'aws-cdk-lib/aws-iam';
+import * as kms from 'aws-cdk-lib/aws-kms';
 import * as route53 from 'aws-cdk-lib/aws-route53';
 import * as config from 'config';
 import * as fs from 'fs';
@@ -39,10 +41,23 @@ export class VaultCdkStack extends cdk.Stack {
     const handle = new ec2.InitServiceRestartHandle();
     const machineImage = ec2.MachineImage.latestAmazonLinux2();
 
+    // Create KMS key for auto-unseal
+    const vaultKmsKey = new kms.Key(this, 'VaultAutoUnsealKey', {
+      description: 'Vault unseal key',
+      alias: 'vault-kms-unseal-key',
+    });
+    // Create an IAM role for the EC2 instance
+    const vaultRole = new iam.Role(this, 'VaultInstanceRole', {
+      assumedBy: new iam.ServicePrincipal('ec2.amazonaws.com'),
+    });
+
+    vaultRole.addManagedPolicy(iam.ManagedPolicy.fromAwsManagedPolicyName('AdministratorAccess'));
+
     const vaultServer = new ec2.Instance(this, 'vaultServer', {
       instanceType: new ec2.InstanceType('t3.micro'),
       machineImage: machineImage,
       vpc: vpc,
+      role: vaultRole,
       keyName: myKey.keyName,
       userData: userDataCommands,
       /**
