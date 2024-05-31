@@ -45,7 +45,12 @@ export class VaultCdkStack extends cdk.Stack {
     const vaultKmsKey = new kms.Key(this, 'VaultAutoUnsealKey', {
       description: 'Vault unseal key',
       alias: 'vault-kms-unseal-key',
+      removalPolicy: cdk.RemovalPolicy.DESTROY
     });
+
+    var vaultConfigTmp = fs.readFileSync('./files/vault_config.hcl', 'utf-8');
+    const vaultConfig = vaultConfigTmp.replace(/KMS_ID/gi, vaultKmsKey.keyId);
+
     // Create an IAM role for the EC2 instance
     const vaultRole = new iam.Role(this, 'VaultInstanceRole', {
       assumedBy: new iam.ServicePrincipal('ec2.amazonaws.com'),
@@ -73,8 +78,7 @@ export class VaultCdkStack extends cdk.Stack {
               fs.readFileSync('./files/consul_ui.json', 'utf-8')),
             ec2.InitFile.fromString('/etc/systemd/system/consul.service',
               fs.readFileSync('./files/consul_systemd', 'utf-8')),
-            ec2.InitFile.fromString('/etc/vault/config.hcl',
-              fs.readFileSync('./files/vault_config.hcl', 'utf-8')),
+            ec2.InitFile.fromString('/etc/vault/config.hcl', vaultConfig),
             ec2.InitFile.fromString('/etc/systemd/system/vault.service',
               fs.readFileSync('./files/vault_systemd', 'utf-8')),
             ec2.InitCommand.shellCommand('sudo systemctl daemon-reload'),
@@ -109,6 +113,10 @@ export class VaultCdkStack extends cdk.Stack {
     new cdk.CfnOutput(this, 'vaultDNSUrl', {
       value: vaultRecordSet.domainName,
       description: 'Domain Name of Instance'
+    });
+    new cdk.CfnOutput(this, 'vaultKmsId', {
+      value: vaultKmsKey.keyId,
+      description: 'Unseal KMS Key ID'
     });
   }
 }
