@@ -21,7 +21,7 @@ export class VaultCdkStack extends cdk.Stack {
       ]
     })
 
-    const configProd: {
+    const configProp: {
       zoneName: string,
       zoneId: string
     } = config.get('vault');
@@ -48,7 +48,7 @@ export class VaultCdkStack extends cdk.Stack {
       removalPolicy: cdk.RemovalPolicy.DESTROY
     });
 
-    var vaultConfigTmp = fs.readFileSync('./files/vault_config.hcl', 'utf-8');
+    const vaultConfigTmp = fs.readFileSync('./files/vault_config.hcl', 'utf-8');
     const vaultConfig = vaultConfigTmp.replace(/KMS_ID/gi, vaultKmsKey.keyId);
 
     // Create an IAM role for the EC2 instance
@@ -101,8 +101,8 @@ export class VaultCdkStack extends cdk.Stack {
       recordType: route53.RecordType.A,
       target: route53.RecordTarget.fromValues(vaultServer.instancePublicIp),      
       zone: route53.HostedZone.fromHostedZoneAttributes(this, 'HostedZone', {
-        hostedZoneId: configProd.zoneId,
-        zoneName: configProd.zoneName,
+        hostedZoneId: configProp.zoneId,
+        zoneName: configProp.zoneName,
       }),
     });
 
@@ -113,10 +113,6 @@ export class VaultCdkStack extends cdk.Stack {
     new cdk.CfnOutput(this, 'vaultDNSUrl', {
       value: vaultRecordSet.domainName,
       description: 'Domain Name of Instance'
-    });
-    new cdk.CfnOutput(this, 'vaultKmsId', {
-      value: vaultKmsKey.keyId,
-      description: 'Unseal KMS Key ID'
     });
   }
 }
