@@ -2,6 +2,7 @@
 import 'source-map-support/register';
 import * as cdk from 'aws-cdk-lib';
 import { VaultCdkStack } from '../lib/vault-cdk-stack';
+import * as config from 'config';
 
 const app = new cdk.App();
 new VaultCdkStack(app, 'VaultCdkStack', {
@@ -18,4 +19,9 @@ new VaultCdkStack(app, 'VaultCdkStack', {
   // env: { account: '354334841216', region: 'ap-southeast-2' },
 
   /* For more information, see https://docs.aws.amazon.com/cdk/latest/guide/environments.html */
+});
+const Tags: Record<string, string> = config.get('vault.tags');
+// Add a tag to all constructs in the stack
+Object.entries(Tags).forEach(([key, value]) => {
+  cdk.Tags.of(app).add(key, value)
 });

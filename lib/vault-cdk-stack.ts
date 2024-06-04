@@ -2,6 +2,7 @@ import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as iam from 'aws-cdk-lib/aws-iam';
+import * as kms from 'aws-cdk-lib/aws-kms';
 import * as route53 from 'aws-cdk-lib/aws-route53';
 import * as config from 'config';
 import * as fs from 'fs';
@@ -20,7 +21,7 @@ export class VaultCdkStack extends cdk.Stack {
       ]
     })
 
-    const configProd: {
+    const configProp: {
       zoneName: string,
       zoneId: string
     } = config.get('vault');
@@ -40,32 +41,28 @@ export class VaultCdkStack extends cdk.Stack {
     const handle = new ec2.InitServiceRestartHandle();
     const machineImage = ec2.MachineImage.latestAmazonLinux2();
 
-    const vaultPolicy = new iam.PolicyStatement({
-      actions: [
-        "iam:AttachUserPolicy",
-        "iam:CreateAccessKey",
-        "iam:CreateUser",
-        "iam:DeleteAccessKey",
-        "iam:DeleteUser",
-        "iam:DeleteUserPolicy",
-        "iam:DetachUserPolicy",
-        "iam:GetUser",
-        "iam:ListAccessKeys",
-        "iam:ListAttachedUserPolicies",
-        "iam:ListGroupsForUser",
-        "iam:ListUserPolicies",
-        "iam:PutUserPolicy",
-        "iam:AddUserToGroup",
-        "iam:RemoveUserFromGroup"
-      ],
-      effect: iam.Effect.ALLOW,
-      resources: [`arn:aws:iam::${process.env.CDK_DEFAULT_ACCOUNT}:user/*`],
-    })
+    // Create KMS key for auto-unseal
+    const vaultKmsKey = new kms.Key(this, 'VaultAutoUnsealKey', {
+      description: 'Vault unseal key',
+      alias: 'vault-kms-unseal-key',
+      removalPolicy: cdk.RemovalPolicy.DESTROY
+    });
+
+    const vaultConfigTmp = fs.readFileSync('./files/vault_config.hcl', 'utf-8');
+    const vaultConfig = vaultConfigTmp.replace(/KMS_ID/gi, vaultKmsKey.keyId);
+
+    // Create an IAM role for the EC2 instance
+    const vaultRole = new iam.Role(this, 'VaultInstanceRole', {
+      assumedBy: new iam.ServicePrincipal('ec2.amazonaws.com'),
+    });
+
+    vaultRole.addManagedPolicy(iam.ManagedPolicy.fromAwsManagedPolicyName('AdministratorAccess'));
 
     const vaultServer = new ec2.Instance(this, 'vaultServer', {
       instanceType: new ec2.InstanceType('t3.micro'),
       machineImage: machineImage,
       vpc: vpc,
+      role: vaultRole,
       keyName: myKey.keyName,
       userData: userDataCommands,
       /**
@@ -81,8 +78,7 @@ export class VaultCdkStack extends cdk.Stack {
               fs.readFileSync('./files/consul_ui.json', 'utf-8')),
             ec2.InitFile.fromString('/etc/systemd/system/consul.service',
               fs.readFileSync('./files/consul_systemd', 'utf-8')),
-            ec2.InitFile.fromString('/etc/vault/config.hcl',
-              fs.readFileSync('./files/vault_config.hcl', 'utf-8')),
+            ec2.InitFile.fromString('/etc/vault/config.hcl', vaultConfig),
             ec2.InitFile.fromString('/etc/systemd/system/vault.service',
               fs.readFileSync('./files/vault_systemd', 'utf-8')),
             ec2.InitCommand.shellCommand('sudo systemctl daemon-reload'),
@@ -106,8 +102,8 @@ export class VaultCdkStack extends cdk.Stack {
       recordType: route53.RecordType.A,
       target: route53.RecordTarget.fromValues(vaultServer.instancePublicIp),      
       zone: route53.HostedZone.fromHostedZoneAttributes(this, 'HostedZone', {
-        hostedZoneId: configProd.zoneId,
-        zoneName: configProd.zoneName,
+        hostedZoneId: configProp.zoneId,
+        zoneName: configProp.zoneName,
       }),
     });
 
