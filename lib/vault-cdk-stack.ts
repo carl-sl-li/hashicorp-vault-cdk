@@ -88,7 +88,6 @@ export class VaultCdkStack extends cdk.Stack {
         }
       }),
     })
-    vaultServer.addToRolePolicy(vaultPolicy)
 
     // vaultServer.connections.allowFromAnyIpv4(ec2.Port.tcp(22))
     vaultServer.connections.allowFromAnyIpv4(ec2.Port.tcp(8200))
