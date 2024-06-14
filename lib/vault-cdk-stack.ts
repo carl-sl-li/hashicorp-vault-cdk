@@ -26,11 +26,6 @@ export class VaultCdkStack extends cdk.Stack {
       zoneId: string
     } = config.get('vault');
 
-    const myKey = new ec2.CfnKeyPair(this, 'myKey', {
-      keyName: 'carlli-key',
-      publicKeyMaterial: fs.readFileSync(`./lib/id_rsa.pub`, 'utf-8')
-    });
-
     const bootstrap = fs.readFileSync(`./lib/vaultServer_UserData.txt`, 'utf-8');
     const userDataCommands = ec2.UserData.forLinux({
       shebang: '#!/bin/bash -xe'
@@ -63,7 +58,6 @@ export class VaultCdkStack extends cdk.Stack {
       machineImage: machineImage,
       vpc: vpc,
       role: vaultRole,
-      keyName: myKey.keyName,
       userData: userDataCommands,
       /**
        * CloudFormation Init and InitOption (Optional)
@@ -94,8 +88,7 @@ export class VaultCdkStack extends cdk.Stack {
     /**
      * Allow only specific IP or IP range (alternative to above Allow From Any)
      */    
-    vaultServer.connections.allowFrom(ec2.Peer.ipv4('193.116.240.127/32'), ec2.Port.tcp(22))
-    // vaultServer.connections.allowFrom(ec2.Peer.ipv4('103.137.12.0/24'), ec2.Port.tcp(80))
+    // vaultServer.connections.allowFrom(ec2.Peer.ipv4('103.137.12.0/24'), ec2.Port.tcp(8200))
 
     const vaultRecordSet = new route53.RecordSet(this, 'vaultRecordSet', {
       recordType: route53.RecordType.A,
