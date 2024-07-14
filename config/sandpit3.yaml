@@ -1,0 +1,5 @@
+vault:
+  zoneName: 'vault.cmdlab-sandpit3.cmdlabs.com.au'
+  zoneId: 'Z07538612V6LPJAJLBCD3'
+  tags:
+    DoNotNuke: 'true'
