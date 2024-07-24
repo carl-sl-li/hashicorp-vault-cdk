@@ -40,7 +40,7 @@ export class VaultCdkStack extends cdk.Stack {
     const vaultKmsKey = new kms.Key(this, 'VaultAutoUnsealKey', {
       description: 'Vault unseal key',
       alias: 'vault-kms-unseal-key',
-      removalPolicy: cdk.RemovalPolicy.DESTROY
+      removalPolicy: cdk.RemovalPolicy.RETAIN
     });
 
     const vaultConfigTmp = fs.readFileSync('./files/vault_config.hcl', 'utf-8');
