@@ -1,5 +1,6 @@
 vault:
   zoneName: 'vault.cmdlab-sandpit3.cmdlabs.com.au'
   zoneId: 'Z07538612V6LPJAJLBCD3'
+  existingKmsArn: 'arn:aws:kms:ap-southeast-2:054671736399:key/44dd391e-f1e0-4e6a-8c31-48541cab6949'
   tags:
     DoNotNuke: 'true'

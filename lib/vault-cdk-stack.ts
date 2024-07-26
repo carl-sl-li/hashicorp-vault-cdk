@@ -22,6 +22,7 @@ export class VaultCdkStack extends cdk.Stack {
     })
 
     const configProp: {
+      existingKmsArn?: string,
       zoneName: string,
       zoneId: string
     } = config.get('vault');
@@ -36,12 +37,19 @@ export class VaultCdkStack extends cdk.Stack {
     const handle = new ec2.InitServiceRestartHandle();
     const machineImage = ec2.MachineImage.latestAmazonLinux2();
 
-    // Create KMS key for auto-unseal
-    const vaultKmsKey = new kms.Key(this, 'VaultAutoUnsealKey', {
+    let vaultKmsKey: kms.IKey;
+    
+    if (configProp.existingKmsArn) {
+      // Use Existing KMS key for auto-unseal
+      vaultKmsKey = kms.Key.fromKeyArn(this, 'ImportedAutoUnsealKey', configProp.existingKmsArn)
+    }
+    else {
+      vaultKmsKey = new kms.Key(this, 'VaultAutoUnsealKey', {
       description: 'Vault unseal key',
       alias: 'vault-kms-unseal-key',
       removalPolicy: cdk.RemovalPolicy.RETAIN
-    });
+      });  
+    }
 
     const vaultConfigTmp = fs.readFileSync('./files/vault_config.hcl', 'utf-8');
     const vaultConfig = vaultConfigTmp.replace(/KMS_ID/gi, vaultKmsKey.keyId);
