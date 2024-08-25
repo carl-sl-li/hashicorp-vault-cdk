@@ -1,6 +1,5 @@
-storage "consul" {
-        address = "127.0.0.1:8500"
-        path = "vault/"
+storage "file" {
+        path = "/mnt/vault/data"
 }
 listener "tcp" {
         address = "0.0.0.0:8200"

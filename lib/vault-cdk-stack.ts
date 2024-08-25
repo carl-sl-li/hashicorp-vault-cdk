@@ -76,15 +76,10 @@ export class VaultCdkStack extends cdk.Stack {
         },
         configs: {
           vaultInit: new ec2.InitConfig([
-            ec2.InitFile.fromString('/etc/consul.d/ui.json',
-              fs.readFileSync('./files/consul_ui.json', 'utf-8')),
-            ec2.InitFile.fromString('/etc/systemd/system/consul.service',
-              fs.readFileSync('./files/consul_systemd', 'utf-8')),
             ec2.InitFile.fromString('/etc/vault/config.hcl', vaultConfig),
             ec2.InitFile.fromString('/etc/systemd/system/vault.service',
               fs.readFileSync('./files/vault_systemd', 'utf-8')),
             ec2.InitCommand.shellCommand('sudo systemctl daemon-reload'),
-            ec2.InitService.enable('consul', { serviceRestartHandle: handle }),
             ec2.InitService.enable('vault', { serviceRestartHandle: handle }),
           ])
         }
