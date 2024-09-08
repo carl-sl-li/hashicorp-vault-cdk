@@ -1,5 +1,3 @@
 vault:
-  zoneName: 'vault.sandpit2.learncmd.com.au'
-  zoneId: 'Z02096331XP7BFNIPM2LU'
-  tags:
-    DoNotNuke: 'true'
+  zoneName: 'vault.example.com' # Put your public zone name here
+  zoneId: 'Z020XXXX1XP7BFNIPM2LU' # Put your zone ID here
