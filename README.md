@@ -1,6 +1,11 @@
-# Welcome to your CDK TypeScript project
+# Welcome to Hashicorp Vault CDK project
 
-This is a blank project for CDK development with TypeScript.
+This project will create a Hashicorp Open Source Vault EC2 instance in public subnet with integrated Raft storage.  It also will create a Route53 RecordSet
+
+`config/development.yaml` file shows the configuration you will required
+- zoneName: _The Route53 public zone name_
+- zoneId: _The Route53 zone ID of the public zone_
+- existingKmsArn: _Existing KMS Key if for vault auto seal_
 
 The `cdk.json` file tells the CDK Toolkit how to execute your app.
 

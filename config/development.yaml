@@ -1,3 +1,4 @@
 vault:
+  # existingKmsArn: # Optional, leave blank will create new KMS key for Vault auto-seal
   zoneName: 'vault.example.com' # Put your public zone name here
   zoneId: 'Z020XXXX1XP7BFNIPM2LU' # Put your zone ID here
