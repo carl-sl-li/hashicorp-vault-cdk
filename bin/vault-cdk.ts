@@ -20,8 +20,3 @@ new VaultCdkStack(app, 'VaultCdkStack', {
 
   /* For more information, see https://docs.aws.amazon.com/cdk/latest/guide/environments.html */
 });
-const Tags: Record<string, string> = config.get('vault.tags');
-// Add a tag to all constructs in the stack
-Object.entries(Tags).forEach(([key, value]) => {
-  cdk.Tags.of(app).add(key, value)
-});
